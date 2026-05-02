@@ -89,6 +89,12 @@ export class Dashboard {
 
   private refresh(currentState?: Session['state'], newlyAddedId?: string): void {
     this.flowMap.render(this.sessions, newlyAddedId);
+      this.refresh(session.state);
+    });
+  }
+
+  private refresh(currentState?: Session['state']): void {
+    this.flowMap.render(this.sessions);
     this.q('#current-state').textContent = currentState ?? this.sessions[0]?.state ?? '-';
     this.q('#total-xp').textContent = String(calculateTotalXp(this.sessions));
 

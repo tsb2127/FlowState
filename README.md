@@ -24,6 +24,7 @@ For each session:
 ## Features
 
 - Interactive HTML Canvas Flow Map (Challenge X-axis, Skill Y-axis) with zones and diagonal Flow band
+- Interactive Flow Map (Challenge X-axis, Skill Y-axis)
 - Session colors:
   - Green = Flow
   - Red = Anxiety
