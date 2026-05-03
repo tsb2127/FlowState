@@ -83,12 +83,6 @@ export class Dashboard {
       this.sessions = [session, ...this.sessions];
       saveSessions(this.sessions);
       this.q<HTMLInputElement>('#task').value = '';
-      this.refresh(session.state, session.id);
-    });
-  }
-
-  private refresh(currentState?: Session['state'], newlyAddedId?: string): void {
-    this.flowMap.render(this.sessions, newlyAddedId);
       this.refresh(session.state);
     });
   }
