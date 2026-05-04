@@ -1,0 +1,100 @@
+<!doctype html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flowstate</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowState — Find Your Zone</title>
+  <style>
+    /* ── Reset & Tokens ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #161a24;
+      --surface2: #1e2433;
+      --border:   #2a3048;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --flow:     #22c55e;
+      --flow-dim: #15803d44;
+      --anxiety:  #f97316;
+      --anx-dim:  #c2410c44;
+      --boredom:  #38bdf8;
+      --bor-dim:  #0369a144;
+      --gold:     #fbbf24;
+      --radius:   14px;
+      --shadow:   0 4px 24px rgba(0,0,0,.45);
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .app { max-width: 960px; margin: 0 auto; display: grid; gap: 1.25rem; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: .75rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -.5px; }
+    .logo span { color: var(--flow); }
+
+    .tagline { color: var(--muted); font-size: .85rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: .7rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 620px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── XP Bar ─────────────────────────────────────────────── */
+    .xp-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .level-badge {
+      background: var(--gold);
+      color: #000;
+      font-weight: 800; font-size: .95rem;
+      padding: .3rem .65rem;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .xp-info { flex: 1; min-width: 160px; }
+    .xp-label { font-size: .8rem; color: var(--muted); margin-bottom: .35rem; }
+    .xp-bar-wrap {
+      background: var(--surface2); border-radius: 100px;
+      height: 10px; overflow: hidden;
+    }
+    .xp-bar {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--flow), #86efac);
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+    .stats-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: .75rem; }
+    .stat { text-align: center; }
