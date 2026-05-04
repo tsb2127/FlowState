@@ -1,48 +1,27 @@
-# Flowstate
+# FlowState
 
-Flowstate is a gamified productivity web app inspired by Mihaly Csikszentmihalyi's Flow theory. It helps users log real-world tasks and classify each session into Flow, Anxiety, or Boredom based on challenge vs. skill.
+A gamified productivity app based on Mihaly Csikszentmihalyi's Flow theory.
 
-## How Flow is calculated
+## What is Flow?
 
-For each session:
+Flow is a mental state of complete immersion. It happens when challenge and skill are balanced:
 
-- If `abs(skill - challenge) <= 1` → **FLOW**
-- Else if `challenge > skill` → **ANXIETY**
-- Else → **BOREDOM**
+- **Flow** (green) — Challenge ≈ Skill: you're in the zone
+- **Anxiety** (orange) — Challenge > Skill: pushed beyond your comfort zone
+- **Boredom** (blue) — Skill > Challenge: underutilised
 
-## Gameplay loop
+## How it works
 
-1. Enter a task name.
-2. Set challenge (1–10) and reflected skill (1–10).
-3. Flowstate evaluates the mental state.
-4. XP is awarded:
-   - FLOW: +50 XP
-   - ANXIETY: +30 XP
-   - BOREDOM: +10 XP
-5. Session is added to history and plotted on the Flow Map.
+1. Log a task with a Challenge rating (1–10) and Skill rating (1–10)
+2. The app evaluates your state and plots it on the **Flow Map**
+3. Earn XP and level up as you build self-awareness
 
-## Features
+XP rewards: Flow → +50 · Anxiety → +30 · Boredom → +10
 
-- Interactive HTML Canvas Flow Map (Challenge X-axis, Skill Y-axis) with zones and diagonal Flow band
-- Interactive Flow Map (Challenge X-axis, Skill Y-axis)
-- Session colors:
-  - Green = Flow
-  - Red = Anxiety
-  - Blue = Boredom
-- Status panel for current state + total XP
-- Session history list
-- localStorage persistence (sessions + XP across reloads)
+## Running locally
 
-## Run locally
+Open `index.html` in any browser — no build step, no dependencies.
 
-```bash
-npm install
-npm run dev
-```
+## Tech
 
-Build for production:
-
-```bash
-npm run build
-npm run preview
-```
+Pure HTML/CSS/JavaScript. Data stored in `localStorage`.
