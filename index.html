@@ -1,12 +1,432 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flowstate</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowState — Find Your Zone</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #161a24;
+      --surface2: #1e2433;
+      --border:   #2a3048;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --flow:     #22c55e;
+      --anxiety:  #f97316;
+      --boredom:  #38bdf8;
+      --gold:     #fbbf24;
+      --radius:   14px;
+      --shadow:   0 4px 24px rgba(0,0,0,.45);
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .app { max-width: 960px; margin: 0 auto; display: grid; gap: 1.25rem; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: .75rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -.5px; }
+    .logo span { color: var(--flow); }
+    .tagline { color: var(--muted); font-size: .85rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: .7rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 620px) { .two-col { grid-template-columns: 1fr; } }
+
+    .xp-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .level-badge {
+      background: var(--gold); color: #000;
+      font-weight: 800; font-size: .95rem;
+      padding: .3rem .65rem; border-radius: 8px; white-space: nowrap;
+    }
+    .xp-info { flex: 1; min-width: 160px; }
+    .xp-label { font-size: .8rem; color: var(--muted); margin-bottom: .35rem; }
+    .xp-bar-wrap { background: var(--surface2); border-radius: 100px; height: 10px; overflow: hidden; }
+    .xp-bar {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--flow), #86efac);
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+    .stats-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: .75rem; }
+    .stat { text-align: center; }
+    .stat-val { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+    .stat-lbl { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    .state-display {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .9rem 1.1rem; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface2);
+      margin-bottom: .75rem;
+    }
+    .state-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .state-name { font-size: 1.1rem; font-weight: 700; }
+    .state-desc { font-size: .8rem; color: var(--muted); }
+
+    .form { display: grid; gap: .9rem; }
+    .field label {
+      display: block; font-size: .78rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: .4rem;
+    }
+    .field input[type="text"] {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px;
+      padding: .6rem .9rem; font-size: .95rem;
+      outline: none; transition: border-color .2s;
+    }
+    .field input[type="text"]:focus { border-color: var(--flow); }
+    .field input[type="text"]::placeholder { color: var(--muted); }
+
+    .slider-row { display: flex; align-items: center; gap: .75rem; }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--flow); cursor: pointer; height: 4px; }
+    .slider-val { min-width: 28px; text-align: center; font-weight: 800; font-size: 1.1rem; }
+
+    .btn {
+      width: 100%; padding: .75rem; border: none; border-radius: 9px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:hover { opacity: .88; }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: var(--flow); color: #000; }
+
+    #flow-map { width: 100%; display: block; border-radius: 8px; }
+    .map-wrap { position: relative; }
+
+    .legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .75rem; }
+    .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .history-list { display: grid; gap: .55rem; max-height: 320px; overflow-y: auto; }
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .session-card {
+      display: flex; align-items: center; gap: .75rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 9px; padding: .65rem .9rem;
+      animation: slideIn .25s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+    .session-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .session-name { font-size: .9rem; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-meta { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+    .session-xp { font-size: .8rem; font-weight: 700; white-space: nowrap; }
+    .empty-state { text-align: center; color: var(--muted); padding: 2rem 0; font-size: .9rem; }
+
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(40px);
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 10px;
+      padding: .7rem 1.2rem; font-size: .9rem; font-weight: 600;
+      box-shadow: var(--shadow); white-space: nowrap;
+      opacity: 0; transition: opacity .3s, transform .3s;
+      pointer-events: none; z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <div class="logo">Flow<span>State</span></div>
+      <div class="tagline">Track your focus. Master the zone.</div>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Player Progress</div>
+    <div class="xp-row">
+      <div class="level-badge" id="level-badge">Lv 1  Novice</div>
+      <div class="xp-info">
+        <div class="xp-label" id="xp-label">0 / 200 XP</div>
+        <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="stat-sessions">0</div><div class="stat-lbl">Sessions</div></div>
+      <div class="stat"><div class="stat-val" id="stat-flow" style="color:var(--flow)">0</div><div class="stat-lbl">Flow</div></div>
+      <div class="stat"><div class="stat-val" id="stat-anxiety" style="color:var(--anxiety)">0</div><div class="stat-lbl">Anxiety</div></div>
+      <div class="stat"><div class="stat-val" id="stat-boredom" style="color:var(--boredom)">0</div><div class="stat-lbl">Boredom</div></div>
+      <div class="stat"><div class="stat-val" id="stat-total-xp" style="color:var(--gold)">0</div><div class="stat-lbl">Total XP</div></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Log a Session</div>
+      <div class="state-display">
+        <div class="state-dot" id="preview-dot" style="background:var(--muted)"></div>
+        <div>
+          <div class="state-name" id="preview-name">—</div>
+          <div class="state-desc" id="preview-desc">Set sliders to preview your zone</div>
+        </div>
+      </div>
+      <form class="form" id="session-form">
+        <div class="field">
+          <label for="task-input">Task Name</label>
+          <input type="text" id="task-input" placeholder="e.g. Writing code, Playing chess…" maxlength="80" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Challenge — How hard was it?</label>
+          <div class="slider-row">
+            <span style="font-size:.75rem;color:var(--muted)">Easy</span>
+            <input type="range" id="challenge-slider" min="1" max="10" value="5" />
+            <span style="font-size:.75rem;color:var(--muted)">Hard</span>
+            <span class="slider-val" id="challenge-val">5</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Skill — How skilled do you feel?</label>
+          <div class="slider-row">
+            <span style="font-size:.75rem;color:var(--muted)">Low</span>
+            <input type="range" id="skill-slider" min="1" max="10" value="5" />
+            <span style="font-size:.75rem;color:var(--muted)">High</span>
+            <span class="slider-val" id="skill-val">5</span>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Log Session → +50 XP</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Flow Map</div>
+      <div class="map-wrap"><canvas id="flow-map"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--flow)"></div> Flow Zone</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--anxiety)"></div> Anxiety</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--boredom)"></div> Boredom</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Session History</div>
+    <div class="history-list" id="history-list">
+      <div class="empty-state">No sessions yet. Log your first task above ↑</div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  function evaluateState(skill, challenge) {
+    if (Math.abs(skill - challenge) <= 1) return 'FLOW';
+    if (challenge > skill) return 'ANXIETY';
+    return 'BOREDOM';
+  }
+
+  const XP_TABLE = { FLOW: 50, ANXIETY: 30, BOREDOM: 10 };
+  const STATE_META = {
+    FLOW:    { color: 'var(--flow)',    label: 'Flow State',   desc: "Perfect balance — you're in the zone!" },
+    ANXIETY: { color: 'var(--anxiety)', label: 'Anxiety Zone', desc: 'Challenge exceeds skill — keep pushing.' },
+    BOREDOM: { color: 'var(--boredom)', label: 'Boredom Zone', desc: 'Skill exceeds challenge — raise the bar.' },
+  };
+
+  const LEVEL_XP    = [0, 200, 500, 900, 1400, 2000, 2800, 3700, 4800, 6000, 7500];
+  const LEVEL_NAMES = ['', 'Novice', 'Learner', 'Practitioner', 'Focused', 'Engaged',
+                        'Skilled', 'Expert', 'Master', 'Elite', 'Flow Legend'];
+
+  function getLevelInfo(totalXp) {
+    let level = 1;
+    for (let i = 1; i < LEVEL_XP.length; i++) {
+      if (totalXp >= LEVEL_XP[i]) level = i + 1; else break;
+    }
+    const current = LEVEL_XP[level - 1] || 0;
+    const next    = LEVEL_XP[level] || LEVEL_XP[LEVEL_XP.length - 1];
+    const pct     = level >= LEVEL_XP.length ? 100 : Math.round(((totalXp - current) / (next - current)) * 100);
+    return { level, next, pct };
+  }
+
+  const KEY = 'flowstate:v2';
+  function loadData() {
+    try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : { sessions: [] }; }
+    catch { return { sessions: [] }; }
+  }
+  function saveData(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+
+  const data = loadData();
+
+  const canvas = document.getElementById('flow-map');
+  const ctx    = canvas.getContext('2d');
+
+  function rgba(cssVar, a) {
+    return ({ 'var(--flow)': `rgba(34,197,94,${a})`, 'var(--anxiety)': `rgba(249,115,22,${a})`, 'var(--boredom)': `rgba(56,189,248,${a})` })[cssVar] || `rgba(100,116,139,${a})`;
+  }
+
+  function drawMap() {
+    const dpr = window.devicePixelRatio || 1;
+    const W   = canvas.parentElement.clientWidth;
+    const H   = Math.round(W * 0.72);
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+
+    const P = { t: 28, r: 20, b: 44, l: 44 };
+    const pw = W - P.l - P.r, ph = H - P.t - P.b;
+    const toX = v => P.l + ((v - 1) / 9) * pw;
+    const toY = v => P.t + (1 - (v - 1) / 9) * ph;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#161a24'; ctx.fillRect(0, 0, W, H);
+
+    ctx.beginPath(); ctx.moveTo(toX(1),toY(1)); ctx.lineTo(toX(10),toY(1)); ctx.lineTo(toX(10),toY(9)); ctx.closePath();
+    ctx.fillStyle = 'rgba(249,115,22,0.07)'; ctx.fill();
+
+    ctx.beginPath(); ctx.moveTo(toX(1),toY(1)); ctx.lineTo(toX(1),toY(10)); ctx.lineTo(toX(9),toY(10)); ctx.closePath();
+    ctx.fillStyle = 'rgba(56,189,248,0.07)'; ctx.fill();
+
+    const bp = [];
+    for (let c = 1; c <= 10; c += 0.5) bp.push({ x: toX(c), y: toY(Math.max(1, c - 1)) });
+    for (let c = 10; c >= 1; c -= 0.5) bp.push({ x: toX(c), y: toY(Math.min(10, c + 1)) });
+    ctx.beginPath(); ctx.moveTo(bp[0].x, bp[0].y);
+    for (const p of bp) ctx.lineTo(p.x, p.y);
+    ctx.closePath(); ctx.fillStyle = 'rgba(34,197,94,0.10)'; ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for (let i = 1; i <= 10; i++) {
+      ctx.beginPath(); ctx.moveTo(toX(i), P.t);   ctx.lineTo(toX(i), H - P.b); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(P.l, toY(i)); ctx.lineTo(W - P.r, toY(i)); ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(P.l, P.t); ctx.lineTo(P.l, H - P.b); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(P.l, H - P.b); ctx.lineTo(W - P.r, H - P.b); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(100,116,139,0.9)'; ctx.font = '600 10px system-ui';
+    ctx.textAlign = 'center';
+    for (let i = 1; i <= 10; i++) ctx.fillText(i, toX(i), H - P.b + 14);
+    ctx.textAlign = 'right';
+    for (let i = 1; i <= 10; i++) ctx.fillText(i, P.l - 6, toY(i) + 4);
+
+    ctx.fillStyle = 'rgba(148,163,184,0.8)'; ctx.font = '700 11px system-ui';
+    ctx.textAlign = 'center'; ctx.fillText('Challenge →', P.l + pw / 2, H - 6);
+    ctx.save(); ctx.translate(12, P.t + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('Skill →', 0, 0); ctx.restore();
+
+    ctx.font = '700 10px system-ui';
+    ctx.fillStyle = 'rgba(249,115,22,0.5)'; ctx.textAlign = 'right'; ctx.fillText('ANXIETY', W - P.r - 4, P.t + 14);
+    ctx.fillStyle = 'rgba(56,189,248,0.5)';  ctx.textAlign = 'left';  ctx.fillText('BOREDOM', P.l + 4, H - P.b - 6);
+    ctx.fillStyle = 'rgba(34,197,94,0.65)';  ctx.textAlign = 'center';
+    ctx.save(); ctx.translate(toX(5.5), toY(5.5)); ctx.rotate(-Math.atan(ph / pw)); ctx.fillText('FLOW ZONE', 0, -6); ctx.restore();
+
+    for (let i = data.sessions.length - 1; i >= 0; i--) {
+      const s = data.sessions[i], x = toX(s.challenge), y = toY(s.skill);
+      const col = STATE_META[s.state].color, latest = i === 0;
+      if (latest) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, 18);
+        g.addColorStop(0, rgba(col, 0.35)); g.addColorStop(1, rgba(col, 0));
+        ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+      }
+      ctx.beginPath(); ctx.arc(x, y, latest ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(col, latest ? 1 : 0.65); ctx.fill();
+      ctx.strokeStyle = '#0d0f14'; ctx.lineWidth = latest ? 2 : 1.5; ctx.stroke();
+    }
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function showToast(msg, ms) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), ms || 2400);
+  }
+
+  function updatePreview() {
+    const c = +$('challenge-slider').value, s = +$('skill-slider').value;
+    const st = evaluateState(s, c), m = STATE_META[st];
+    $('preview-dot').style.background = m.color;
+    $('preview-name').textContent = m.label;
+    $('preview-desc').textContent = m.desc;
+    $('submit-btn').textContent = 'Log Session → +' + XP_TABLE[st] + ' XP';
+  }
+
+  function refreshStats() {
+    const ss = data.sessions, xp = ss.reduce((a, x) => a + x.xpEarned, 0);
+    $('stat-sessions').textContent = ss.length;
+    $('stat-flow').textContent     = ss.filter(s => s.state === 'FLOW').length;
+    $('stat-anxiety').textContent  = ss.filter(s => s.state === 'ANXIETY').length;
+    $('stat-boredom').textContent  = ss.filter(s => s.state === 'BOREDOM').length;
+    $('stat-total-xp').textContent = xp;
+    const li = getLevelInfo(xp);
+    $('level-badge').textContent = 'Lv ' + li.level + '  ' + (LEVEL_NAMES[Math.min(li.level, LEVEL_NAMES.length - 1)]);
+    $('xp-label').textContent    = xp + ' / ' + li.next + ' XP';
+    $('xp-bar').style.width      = li.pct + '%';
+  }
+
+  function renderHistory() {
+    const list = $('history-list'), ss = data.sessions;
+    if (!ss.length) { list.innerHTML = '<div class="empty-state">No sessions yet. Log your first task above ↑</div>'; return; }
+    list.innerHTML = ss.map(s => {
+      const m = STATE_META[s.state], d = new Date(s.createdAt).toLocaleDateString(undefined, { month:'short', day:'numeric' });
+      return '<div class="session-card">' +
+        '<div class="session-dot" style="background:' + m.color + '"></div>' +
+        '<div class="session-name" title="' + s.task + '">' + s.task + '</div>' +
+        '<div class="session-meta">C' + s.challenge + ' / S' + s.skill + ' · ' + d + '</div>' +
+        '<div class="session-xp" style="color:' + m.color + '">+' + s.xpEarned + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function refresh() { refreshStats(); renderHistory(); drawMap(); }
+
+  document.getElementById('session-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const task = $('task-input').value.trim();
+    if (!task) { $('task-input').focus(); return; }
+    const c = +$('challenge-slider').value, s = +$('skill-slider').value;
+    const state = evaluateState(s, c), xpEarned = XP_TABLE[state];
+    const prevXp = data.sessions.reduce((a, x) => a + x.xpEarned, 0);
+    data.sessions.unshift({ id: Date.now() + Math.random().toString(36).slice(2), task, challenge: c, skill: s, state, xpEarned, createdAt: new Date().toISOString() });
+    saveData(data);
+    $('task-input').value = '';
+    refresh();
+    const newXp = prevXp + xpEarned;
+    if (getLevelInfo(newXp).level > getLevelInfo(prevXp).level) {
+      const lv = getLevelInfo(newXp).level;
+      showToast('🎉 Level Up! Level ' + lv + ' — ' + LEVEL_NAMES[Math.min(lv, LEVEL_NAMES.length - 1)] + '!', 3500);
+    } else {
+      showToast(STATE_META[state].label + ' — +' + xpEarned + ' XP logged!');
+    }
+  });
+
+  document.getElementById('challenge-slider').addEventListener('input', () => { $('challenge-val').textContent = $('challenge-slider').value; updatePreview(); });
+  document.getElementById('skill-slider').addEventListener('input',     () => { $('skill-val').textContent     = $('skill-slider').value;     updatePreview(); });
+
+  updatePreview();
+  refresh();
+  window.addEventListener('resize', () => { clearTimeout(window._rt); window._rt = setTimeout(drawMap, 80); });
+</script>
+</body>
 </html>
